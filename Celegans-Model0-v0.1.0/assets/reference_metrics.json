@@ -1,0 +1,150 @@
+{
+  "parameters": {
+    "width": 64.0,
+    "height": 48.0,
+    "nx": 64,
+    "ny": 48,
+    "n_agents": 1800,
+    "dt": 0.1,
+    "v_min": 0.06,
+    "v_max": 2.0,
+    "oxygen_midpoint": 0.55,
+    "response_width": 0.045,
+    "rotational_diffusion": 0.25,
+    "oxygen_diffusion": 1.0,
+    "replenishment": 0.06,
+    "ambient": 1.0,
+    "consumption": 0.06,
+    "oxygen_half_saturation": 0.1,
+    "kernel_width": 1.2,
+    "speed_response": true
+  },
+  "time": 300,
+  "versions": {
+    "python": "3.12.14",
+    "numpy": "2.3.5",
+    "scipy": "1.17.0",
+    "matplotlib": "3.10.8"
+  },
+  "feedback": [
+    {
+      "variant": "base",
+      "seed": 1,
+      "H_initial": 0.026170888954205832,
+      "H_final": 0.9114578608202986,
+      "mean_oxygen": 0.5571583814037467,
+      "min_oxygen": 0.14124997952526966,
+      "polar_order": 0.007352683487252231
+    },
+    {
+      "variant": "base",
+      "seed": 2,
+      "H_initial": 0.03082444672160371,
+      "H_final": 0.8294871825767421,
+      "mean_oxygen": 0.5579201491241865,
+      "min_oxygen": 0.16847216795623443,
+      "polar_order": 0.015113018701903883
+    },
+    {
+      "variant": "base",
+      "seed": 3,
+      "H_initial": 0.03558669163477681,
+      "H_final": 0.8325489023074645,
+      "mean_oxygen": 0.5552776736677935,
+      "min_oxygen": 0.16011969188382064,
+      "polar_order": 0.011729243245710464
+    },
+    {
+      "variant": "half dt",
+      "seed": 1,
+      "H_initial": 0.026170888954205832,
+      "H_final": 0.8359068704608837,
+      "mean_oxygen": 0.5563249504657549,
+      "min_oxygen": 0.11765574386852881,
+      "polar_order": 0.027245803568898417
+    },
+    {
+      "variant": "half dt",
+      "seed": 2,
+      "H_initial": 0.03082444672160371,
+      "H_final": 0.8136333608395026,
+      "mean_oxygen": 0.5549376573712357,
+      "min_oxygen": 0.1411730944080205,
+      "polar_order": 0.03210736557325001
+    },
+    {
+      "variant": "half dt",
+      "seed": 3,
+      "H_initial": 0.03558669163477681,
+      "H_final": 0.708323544648878,
+      "mean_oxygen": 0.5513900898871581,
+      "min_oxygen": 0.16490562299391764,
+      "polar_order": 0.023693425876506583
+    },
+    {
+      "variant": "finer grid",
+      "seed": 1,
+      "H_initial": 0.027042165520453774,
+      "H_final": 0.8911460624670449,
+      "mean_oxygen": 0.5602102309704843,
+      "min_oxygen": 0.1072566695892747,
+      "polar_order": 0.027245803568898417
+    },
+    {
+      "variant": "finer grid",
+      "seed": 2,
+      "H_initial": 0.03176746477556659,
+      "H_final": 0.8334059779374753,
+      "mean_oxygen": 0.5543278566413835,
+      "min_oxygen": 0.1433107338306605,
+      "polar_order": 0.03210736557325001
+    },
+    {
+      "variant": "finer grid",
+      "seed": 3,
+      "H_initial": 0.03670690473105883,
+      "H_final": 0.7067995452092256,
+      "mean_oxygen": 0.5495596498872366,
+      "min_oxygen": 0.1615864701636339,
+      "polar_order": 0.023693425876506583
+    }
+  ],
+  "controls": [
+    {
+      "variant": "Constant speed",
+      "seed": 1,
+      "H_initial": 0.026170888954205832,
+      "H_final": 0.029524357309664434
+    },
+    {
+      "variant": "No consumption",
+      "seed": 1,
+      "H_initial": 0.026170888954205832,
+      "H_final": 0.029527959435317264
+    },
+    {
+      "variant": "Constant speed",
+      "seed": 2,
+      "H_initial": 0.03082444672160371,
+      "H_final": 0.023198399808550433
+    },
+    {
+      "variant": "No consumption",
+      "seed": 2,
+      "H_initial": 0.03082444672160371,
+      "H_final": 0.023185854287094392
+    },
+    {
+      "variant": "Constant speed",
+      "seed": 3,
+      "H_initial": 0.03558669163477681,
+      "H_final": 0.024557858784082214
+    },
+    {
+      "variant": "No consumption",
+      "seed": 3,
+      "H_initial": 0.03558669163477681,
+      "H_final": 0.024557149141623057
+    }
+  ]
+}
