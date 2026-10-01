@@ -1,10 +1,13 @@
 """Figures for Model 1. Rendering never alters simulation state or RNG state.
 
-Three families: the prediction (speed laws, dispersion relations, predicted
-maps), the run (density, oxygen, structure factor, histories) and the sweep
-(phase diagrams with the predicted boundary drawn over the simulated labels).
+Four families: the prediction (speed laws, dispersion relations, predicted
+maps), the run (density, oxygen, structure factor, histories), the sweep
+(phase diagrams with the predicted boundary drawn over the simulated labels),
+and the time-lapse (how each morphology forms, from precomputed frames).
 """
+import json
 from io import BytesIO
+from pathlib import Path
 import numpy as np
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_agg import FigureCanvasAgg
@@ -401,3 +404,118 @@ def demo_frame(sim, predicted=None, *, sample=3500):
 def _demo_metrics(rho, p):
     from .patterns import classify
     return classify(rho, p.dx, p.dy, smoothing=DIAGNOSTIC_LENGTH)
+
+
+# -- time-lapse ----------------------------------------------------------
+#
+# The frames are precomputed by scripts/timelapse_figure.py and stored in
+# assets/timelapse.json, because watching four conditions form takes about
+# 100,000 turns in total -- far too long for a notebook cell. The stored
+# frames are relative density (rho / mean rho) clipped to [0, 3] and
+# quantised to a byte, which is all the colour ramp resolves anyway.
+
+TIMELAPSE_VMAX = 3.0
+
+
+def load_timelapse(path=None):
+    """Read the precomputed time-lapse payload and decode its frames.
+
+    Returns the payload with each case's `frames` replaced by a stacked float
+    array of relative density, shaped (n_times, grid, grid).
+    """
+    if path is None:
+        path = Path(__file__).resolve().parents[2] / 'assets' / 'timelapse.json'
+    path = Path(path)
+    if not path.exists():
+        raise FileNotFoundError(
+            f'{path} not found - run: python scripts/timelapse_figure.py')
+    payload = json.loads(path.read_text())
+    grid = int(payload['grid'])
+    for case in payload['cases']:
+        frames = np.array(case['frames'], dtype=float) / 255.0 * TIMELAPSE_VMAX
+        case['frames'] = frames.reshape(-1, grid, grid)
+    return payload
+
+
+def _timelapse_panel(ax, field, label, title=None, grid=None):
+    """One density snapshot with the classifier's verdict banded underneath."""
+    grid = field.shape[0] if grid is None else grid
+    ax.imshow(field, origin='lower', vmin=0, vmax=TIMELAPSE_VMAX, cmap='magma',
+              interpolation='nearest')
+    ax.set_xticks([])
+    ax.set_yticks([])
+    if title:
+        ax.set_title(title, fontsize=8.5, color=NAVY, pad=3)
+    ax.add_patch(Patch(color=LABEL_COLORS[label]))          # placeholder, replaced below
+    ax.patches[-1].remove()
+    from matplotlib.patches import Rectangle
+    ax.add_patch(Rectangle((0, 0), grid, grid * 0.085,
+                           color=LABEL_COLORS[label], zorder=5))
+    ax.text(grid / 2, grid * 0.042, label, ha='center', va='center',
+            fontsize=7.5, zorder=6,
+            color='white' if label in ('stripes', 'holes') else '#222')
+
+
+def plot_timelapse(payload=None, *, shown=(0, 2, 4, 6, 8, 11)):
+    """The static grid: one row per condition, one column per sampled time.
+
+    This is the version that survives with no kernel running, so it is what the
+    notebook shows first and what `assets/timelapse.png` holds.
+    """
+    payload = load_timelapse() if payload is None else payload
+    cases, times = payload['cases'], payload['times']
+    shown = [i for i in shown if i < len(times)]
+    rows, cols = len(cases), len(shown)
+    fig = _figure((1.75 * cols + 2.1, 1.75 * rows + 1.0))
+    axes = fig.subplots(rows, cols, squeeze=False)
+    for r, case in enumerate(cases):
+        for c, i in enumerate(shown):
+            _timelapse_panel(axes[r][c], case['frames'][i], case['labels'][i],
+                             title=f't = {times[i]}')
+        axes[r][0].set_ylabel(f"{case['name']}\nW = {case['density']:.2f}\n"
+                              f"N = {case['n_agents']:,}",
+                              fontsize=9, color=NAVY, rotation=0,
+                              ha='right', va='center', labelpad=50)
+    fig.suptitle('Pattern formation over time  ·  same strain, same air, different '
+                 "density  ·  band under each frame = the classifier's label",
+                 fontsize=12.5, color=NAVY, weight='bold')
+    return fig
+
+
+def plot_timelapse_at(payload, index):
+    """All conditions at one instant, side by side, with the H trace beneath.
+
+    The panel the interactive scrubber redraws as the time slider moves.
+    """
+    cases, times = payload['cases'], payload['times']
+    fig = _figure((3.1 * len(cases), 4.5))
+    grid = fig.add_gridspec(2, len(cases), height_ratios=(1.0, 0.45))
+    for c, case in enumerate(cases):
+        ax = fig.add_subplot(grid[0, c])
+        _timelapse_panel(ax, case['frames'][index], case['labels'][index])
+        ax.set_title(f"{case['name']}  ·  W = {case['density']:.2f}",
+                     fontsize=10, color=NAVY, weight='bold', loc='left')
+    trace = fig.add_subplot(grid[1, :])
+    colors = (ORANGE, TEAL, PLUM, '#9aa5b1')
+    for case, color in zip(cases, colors):
+        trace.plot(times, case['heterogeneity'], color=color, lw=1.8,
+                   label=case['name'])
+        trace.plot([times[index]], [case['heterogeneity'][index]], 'o',
+                   color=color, ms=7)
+    trace.axvline(times[index], color=NAVY, lw=1.2, ls='--')
+    trace.set(xlabel='Time [model time]', ylabel='Heterogeneity H', ylim=(0, None))
+    trace.legend(frameon=False, fontsize=8, ncol=len(cases))
+    trace.grid(alpha=0.18)
+    trace.spines[['top', 'right']].set_visible(False)
+    fig.suptitle(f'Density at t = {times[index]}', fontsize=12.5, color=NAVY,
+                 weight='bold')
+    return fig
+
+
+def timelapse_frame(payload, index):
+    """`plot_timelapse_at` as PNG bytes, for the scrubber's image widget."""
+    fig = plot_timelapse_at(payload, index)
+    buffer = BytesIO()
+    fig.savefig(buffer, format='png', dpi=84)
+    fig.clear()
+    return buffer.getvalue()
